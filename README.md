@@ -3,6 +3,10 @@
 
 [![Platform Status](https://img.shields.io/badge/Platform-Production%20Ready-brightgreen)]()
 [![Sessions Complete](https://img.shields.io/badge/Sessions-8%2F8%20Complete-success)]()
+[![GitHub stars](https://img.shields.io/github/stars/dev-shiki/devops-portfolio-platform)](https://github.com/dev-shiki/devops-portfolio-platform/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/dev-shiki/devops-portfolio-platform)](https://github.com/dev-shiki/devops-portfolio-platform/network)
+[![GitHub issues](https://img.shields.io/github/issues/dev-shiki/devops-portfolio-platform)](https://github.com/dev-shiki/devops-portfolio-platform/issues)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-blue)]()
 [![GitOps](https://img.shields.io/badge/GitOps-ArgoCD-orange)]()
 [![Monitoring](https://img.shields.io/badge/Monitoring-Prometheus%20%2B%20Grafana-red)]()
@@ -11,6 +15,8 @@
 
 ### **Project ID**: `PORTFOLIO-DEVOPS-2025-V1`
 ### **Title**: Platform Pengiriman Aplikasi Cloud-Native Otomatis dengan Keamanan Terintegrasi
+
+> **🎯 This repository demonstrates enterprise-grade DevOps practices through a complete cloud-native platform implementation. Perfect for showcasing advanced Kubernetes, GitOps, observability, and security integration skills.**
 
 ---
 
@@ -53,8 +59,8 @@ Comprehensive DevOps platform yang mendemonstrasikan **enterprise-grade practice
 
 ### **1. Clone & Setup**
 ```bash
-git clone <repository-url>
-cd devOps
+git clone https://github.com/dev-shiki/devops-portfolio-platform.git
+cd devops-portfolio-platform
 make help  # View all available commands
 ```
 
@@ -234,26 +240,6 @@ make final-deployment     # Complete platform deployment
 
 ---
 
-## 📖 **Documentation**
-
-### **📋 Session Documentation**
-- [SESI1-HASIL.md](SESI1-HASIL.md) - Foundation & Containerization
-- [SESI2-HASIL.md](SESI2-HASIL.md) - Kubernetes Setup & Deployment
-- [SESI3-HASIL.md](SESI3-HASIL.md) - CI Automation dengan GitHub Actions
-- [SESI4-HASIL.md](SESI4-HASIL.md) - DevSecOps Integration
-- [SESI5-HASIL.md](SESI5-HASIL.md) - GitOps dengan ArgoCD
-- [SESI6-HASIL.md](SESI6-HASIL.md) - Complete CI/CD Loop
-- [SESI7-HASIL.md](SESI7-HASIL.md) - Observability Stack
-- [SESI8-HASIL.md](SESI8-HASIL.md) - Service Communication & Finalization
-
-### **🔧 Technical Documentation**
-- **API Documentation**: gRPC dan REST API specifications
-- **Architecture Documentation**: System design dan component interaction
-- **Operations Runbook**: Deployment, monitoring, dan troubleshooting guides
-- **Security Policies**: DevSecOps practices dan compliance procedures
-
----
-
 ## 🎯 **DevOps Best Practices Demonstrated**
 
 ### **✅ Development Excellence**
@@ -333,9 +319,9 @@ make security-scan
 ## 📞 **Support & Contact**
 
 For questions, issues, or contributions:
-- **GitHub Issues**: Use untuk bug reports dan feature requests
-- **Documentation**: Comprehensive guides available in session documentation
-- **Community**: Follow established DevOps best practices
+- **GitHub Issues**: [Create an issue](https://github.com/dev-shiki/devops-portfolio-platform/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/dev-shiki/devops-portfolio-platform/discussions)
+- **Portfolio**: Professional DevOps platform showcase
 
 ---
 
@@ -362,5 +348,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ```
 
 **Platform ID**: `PORTFOLIO-DEVOPS-2025-V1`  
+**Repository**: https://github.com/dev-shiki/devops-portfolio-platform  
 **Status**: ✅ **PRODUCTION READY**  
 **Last Updated**: Session 8 Final - Service Communication & Finalization Complete 

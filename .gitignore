@@ -1,8 +1,9 @@
 # DevOps Portfolio Project .gitignore
 
-# Base requirements and step files (not needed in portfolio)
+# Documentation files not needed in portfolio repository
 base.md
 step.md
+session-docs/
 
 # Binaries and Build Artifacts
 */bin/
