@@ -41,6 +41,10 @@ jobs:
     name: Build and Test
     uses: ./.github/workflows/ci.yml
     secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
 
   # Stage 2: Security Validation
   security-validation:
@@ -48,6 +52,10 @@ jobs:
     uses: ./.github/workflows/security.yml
     needs: build-test
     secrets: inherit
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
     
   # Stage 3: GitOps Preparation
   gitops-preparation:
