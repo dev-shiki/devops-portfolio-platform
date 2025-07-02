@@ -2,28 +2,28 @@ name: Complete CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, master ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
     inputs:
-      deployment_strategy:
-        description: 'Deployment Strategy'
-        required: true
-        default: 'standard'
-        type: choice
-        options:
-        - standard
-        - blue-green
-        - canary
-      target_environment:
-        description: 'Target Environment'
+      environment:
+        description: 'Deployment environment'
         required: true
         default: 'staging'
         type: choice
         options:
         - staging
         - production
+      deployment_strategy:
+        description: 'Deployment strategy'
+        required: true
+        default: 'rolling'
+        type: choice
+        options:
+        - rolling
+        - blue-green
+        - canary
       force_deploy:
         description: 'Force deployment even if tests fail'
         required: false

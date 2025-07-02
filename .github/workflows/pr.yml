@@ -2,7 +2,8 @@ name: PR Pipeline
 
 on:
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, master ]
+    types: [opened, synchronize, reopened]
 
 env:
   REGISTRY: ghcr.io
