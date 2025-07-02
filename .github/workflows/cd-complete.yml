@@ -172,24 +172,42 @@ jobs:
         USER_TAG="${{ needs.gitops-preparation.outputs.user-image-tag }}"
         ORDER_TAG="${{ needs.gitops-preparation.outputs.order-image-tag }}"
         
-        # Update user service manifest
-        sed -i "s|image: ghcr.io/your-username/devops-portfolio/user-service:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_USER }}:${USER_TAG}|g" \
+        echo "User service tag: ${USER_TAG}"
+        echo "Order service tag: ${ORDER_TAG}"
+        
+        # Check if manifest files exist
+        if [ ! -f "gitops/manifests/user-service/deployment.yaml" ]; then
+          echo "❌ User service manifest not found"
+          exit 1
+        fi
+        
+        if [ ! -f "gitops/manifests/order-service/deployment.yaml" ]; then
+          echo "❌ Order service manifest not found"
+          exit 1
+        fi
+        
+        # Update user service manifest (handle comments and whitespace)
+        sed -i "s|image: ghcr\.io/.*user-service:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_USER }}:${USER_TAG}|g" \
           gitops/manifests/user-service/deployment.yaml
           
-        # Update order service manifest  
-        sed -i "s|image: ghcr.io/your-username/devops-portfolio/order-service:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_ORDER }}:${ORDER_TAG}|g" \
+        # Update order service manifest (handle comments and whitespace)
+        sed -i "s|image: ghcr\.io/.*order-service:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_ORDER }}:${ORDER_TAG}|g" \
           gitops/manifests/order-service/deployment.yaml
           
-        # Update application version annotations
-        TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-        sed -i "s|app.kubernetes.io/version: \".*\"|app.kubernetes.io/version: \"${USER_TAG}\"|g" \
+        # Update application version annotations (more flexible pattern)
+        sed -i "s|app\.kubernetes\.io/version: .*|app.kubernetes.io/version: \"${USER_TAG}\"|g" \
           gitops/manifests/user-service/deployment.yaml
-        sed -i "s|app.kubernetes.io/version: \".*\"|app.kubernetes.io/version: \"${ORDER_TAG}\"|g" \
+        sed -i "s|app\.kubernetes\.io/version: .*|app.kubernetes.io/version: \"${ORDER_TAG}\"|g" \
           gitops/manifests/order-service/deployment.yaml
           
         echo "✅ GitOps manifests updated!"
         echo "User service: ${USER_TAG}"
         echo "Order service: ${ORDER_TAG}"
+        
+        # Show what was changed
+        echo "📋 Changes made:"
+        grep "image:" gitops/manifests/user-service/deployment.yaml || echo "No image line found in user-service"
+        grep "image:" gitops/manifests/order-service/deployment.yaml || echo "No image line found in order-service"
         
     - name: Validate updated manifests
       run: |
@@ -200,11 +218,24 @@ jobs:
         chmod +x kubectl
         sudo mv kubectl /usr/local/bin/
         
-        # Validate manifest syntax
-        kubectl apply --dry-run=client -f gitops/manifests/user-service/deployment.yaml
-        kubectl apply --dry-run=client -f gitops/manifests/order-service/deployment.yaml
+        # Validate manifest syntax with better error handling
+        echo "Validating user-service manifest..."
+        if kubectl apply --dry-run=client -f gitops/manifests/user-service/deployment.yaml; then
+          echo "✅ User service manifest is valid"
+        else
+          echo "❌ User service manifest validation failed"
+          exit 1
+        fi
         
-        echo "✅ Updated manifests validated!"
+        echo "Validating order-service manifest..."
+        if kubectl apply --dry-run=client -f gitops/manifests/order-service/deployment.yaml; then
+          echo "✅ Order service manifest is valid"
+        else
+          echo "❌ Order service manifest validation failed"
+          exit 1
+        fi
+        
+        echo "✅ All manifests validated successfully!"
         
     - name: Generate deployment summary
       run: |
@@ -232,26 +263,41 @@ jobs:
       run: |
         DEPLOYMENT_BRANCH="${{ needs.gitops-preparation.outputs.deployment-branch }}"
         
-        # Check if there are changes
-        if git diff --quiet && git diff --staged --quiet; then
-          echo "No changes to commit"
-          exit 0
-        fi
+        echo "🔍 Checking for changes to commit..."
         
+        # Add files first
         git add gitops/manifests/
         git add deployment-summary.md
-        git commit -m "🚀 Deploy: Update image tags
         
-        - User service: ${{ needs.gitops-preparation.outputs.user-image-tag }}
-        - Order service: ${{ needs.gitops-preparation.outputs.order-image-tag }}
-        - Strategy: ${{ github.event.inputs.deployment_strategy || 'standard' }}
-        - Environment: ${{ github.event.inputs.target_environment || 'staging' }}
+        # Check if there are changes to commit
+        if git diff --cached --quiet; then
+          echo "ℹ️  No changes to commit - manifests may already be up to date"
+          echo "Creating empty commit to trigger deployment..."
+          git commit --allow-empty -m "🚀 Deploy: Trigger deployment (no manifest changes)
+          
+          - User service: ${{ needs.gitops-preparation.outputs.user-image-tag }}
+          - Order service: ${{ needs.gitops-preparation.outputs.order-image-tag }}
+          - Strategy: ${{ github.event.inputs.deployment_strategy || 'standard' }}
+          - Environment: ${{ github.event.inputs.target_environment || 'staging' }}
+          
+          Triggered by: ${{ github.actor }}
+          Commit: ${{ github.sha }}"
+        else
+          echo "✅ Changes detected, creating commit..."
+          git commit -m "🚀 Deploy: Update image tags
+          
+          - User service: ${{ needs.gitops-preparation.outputs.user-image-tag }}
+          - Order service: ${{ needs.gitops-preparation.outputs.order-image-tag }}
+          - Strategy: ${{ github.event.inputs.deployment_strategy || 'standard' }}
+          - Environment: ${{ github.event.inputs.target_environment || 'staging' }}
+          
+          Triggered by: ${{ github.actor }}
+          Commit: ${{ github.sha }}"
+        fi
         
-        Triggered by: ${{ github.actor }}
-        Commit: ${{ github.sha }}"
-        
+        echo "📤 Pushing to branch: ${DEPLOYMENT_BRANCH}"
         git push origin "${DEPLOYMENT_BRANCH}"
-        echo "✅ Changes pushed to branch: ${DEPLOYMENT_BRANCH}"
+        echo "✅ Changes pushed successfully"
         
     - name: Create Pull Request
       uses: actions/github-script@v7
