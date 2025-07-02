@@ -2,7 +2,7 @@ name: PR Pipeline
 
 on:
   pull_request:
-    branches: [ main, master ]
+    branches: [ master ]
     types: [opened, synchronize, reopened]
 
 env:

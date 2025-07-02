@@ -1,16 +1,22 @@
-name: Advanced Deployment Strategies
+name: Deployment Strategies
 
 on:
   workflow_dispatch:
     inputs:
       strategy:
-        description: 'Deployment Strategy'
+        description: 'Deployment strategy to execute'
         required: true
+        default: 'blue-green'
         type: choice
         options:
         - blue-green
         - canary
         - rolling
+      target_branch:
+        description: 'Target branch for deployment'
+        required: true
+        default: 'master'
+        type: string
       service:
         description: 'Service to Deploy'
         required: true

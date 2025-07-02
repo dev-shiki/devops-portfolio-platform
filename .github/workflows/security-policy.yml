@@ -1,20 +1,22 @@
-name: Security Policy Governance
+name: Security Policy Validation
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master, develop ]
     paths:
-      - '.github/workflows/**'
-      - '**/Dockerfile'
-      - '**/go.mod'
-      - '**/go.sum'
+      - '.github/security-policies/**'
+      - 'k8s-manifests/**'
+      - 'gitops/**'
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
     paths:
-      - '.github/workflows/**'
-      - '**/Dockerfile'
-      - '**/go.mod'
-      - '**/go.sum'
+      - '.github/security-policies/**'
+      - 'k8s-manifests/**'
+      - 'gitops/**'
+  schedule:
+    # Run policy validation weekly on Sundays at 3 AM UTC
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
 
 jobs:
   security-governance:

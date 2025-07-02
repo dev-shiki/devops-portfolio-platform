@@ -2,9 +2,9 @@ name: Security Pipeline
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ master, develop ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ master ]
   schedule:
     # Run security scan every day at 2 AM UTC
     - cron: '0 2 * * *'

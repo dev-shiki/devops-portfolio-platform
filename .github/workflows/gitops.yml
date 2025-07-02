@@ -1,31 +1,35 @@
-name: GitOps Deployment
+name: GitOps Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
     paths:
       - 'gitops/**'
       - 'k8s-manifests/**'
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
     paths:
       - 'gitops/**'
       - 'k8s-manifests/**'
   workflow_dispatch:
     inputs:
-      environment:
-        description: 'Target environment'
+      target_environment:
+        description: 'Target deployment environment'
         required: true
         default: 'staging'
         type: choice
         options:
         - staging
         - production
-      force_sync:
-        description: 'Force Argo CD sync'
-        required: false
-        type: boolean
-        default: false
+      sync_strategy:
+        description: 'Argo CD sync strategy'
+        required: true
+        default: 'auto'
+        type: choice
+        options:
+        - auto
+        - manual
+        - force
 
 env:
   REGISTRY: ghcr.io
@@ -179,7 +183,7 @@ jobs:
     name: GitOps Deployment Trigger
     runs-on: ubuntu-latest
     needs: [validate-gitops, security-scan-gitops]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     permissions:
       contents: read
       
@@ -272,7 +276,7 @@ jobs:
         if [ "${{ needs.gitops-deployment.result }}" == "success" ]; then
           echo "✅ **GitOps Deployment**: Successful" >> $GITHUB_STEP_SUMMARY
         elif [ "${{ needs.gitops-deployment.result }}" == "skipped" ]; then
-          echo "⏭️ **GitOps Deployment**: Skipped (not main branch)" >> $GITHUB_STEP_SUMMARY
+          echo "⏭️ **GitOps Deployment**: Skipped (not master branch)" >> $GITHUB_STEP_SUMMARY
         else
           echo "❌ **GitOps Deployment**: Failed" >> $GITHUB_STEP_SUMMARY
         fi
