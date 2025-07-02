@@ -32,7 +32,7 @@ jobs:
         path: |
           ~/.cache/go-build
           ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-go-${{ hashFiles('user-service/go.sum', 'order-service/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
           
@@ -97,6 +97,7 @@ jobs:
       continue-on-error: true
       with:
         sarif_file: 'trivy-user-results.sarif'
+        category: 'trivy-ci-user-service'
         
     - name: Upload Trivy scan results - Order Service
       uses: github/codeql-action/upload-sarif@v3
@@ -104,6 +105,7 @@ jobs:
       continue-on-error: true
       with:
         sarif_file: 'trivy-order-results.sarif'
+        category: 'trivy-ci-order-service'
         
     - name: Security Gate Check
       run: |
@@ -215,6 +217,7 @@ jobs:
       continue-on-error: true
       with:
         sarif_file: 'trivy-user-image-results.sarif'
+        category: 'trivy-container-user-service'
         
     - name: Upload Trivy scan results - Order Service Image
       uses: github/codeql-action/upload-sarif@v3
@@ -222,6 +225,7 @@ jobs:
       continue-on-error: true
       with:
         sarif_file: 'trivy-order-image-results.sarif'
+        category: 'trivy-container-order-service'
 
   notify:
     name: Notify Success
