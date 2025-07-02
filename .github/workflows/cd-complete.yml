@@ -57,6 +57,7 @@ jobs:
       contents: read
       security-events: write
       actions: read
+      packages: read
     
   # Stage 3: GitOps Preparation
   gitops-preparation:
