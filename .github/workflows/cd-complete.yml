@@ -146,6 +146,8 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      issues: write
+      metadata: read
       
     steps:
     - name: Checkout code
@@ -363,46 +365,103 @@ jobs:
         fi
         
     - name: Create Pull Request
+      continue-on-error: true
+      id: create-pr
       uses: actions/github-script@v7
       with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const { data: pr } = await github.rest.pulls.create({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            title: `🚀 Deploy: ${{ needs.gitops-preparation.outputs.user-image-tag }}`,
-            head: '${{ needs.gitops-preparation.outputs.deployment-branch }}',
-            base: 'master',
-            body: `## 🚀 Automated Deployment
+          try {
+            console.log('🚀 Creating deployment pull request...');
             
-            This PR contains automated GitOps manifest updates for deployment.
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚀 Deploy: ${{ needs.gitops-preparation.outputs.user-image-tag }}`,
+              head: '${{ needs.gitops-preparation.outputs.deployment-branch }}',
+              base: 'master',
+              body: `## 🚀 Automated Deployment
+              
+              This PR contains automated GitOps manifest updates for deployment.
+              
+              ### 📦 Updated Images:
+              - **User Service:** \`${{ needs.gitops-preparation.outputs.user-image-tag }}\`
+              - **Order Service:** \`${{ needs.gitops-preparation.outputs.order-image-tag }}\`
+              
+              ### 🎯 Deployment Configuration:
+              - **Strategy:** ${{ github.event.inputs.deployment_strategy || 'standard' }}
+              - **Environment:** ${{ github.event.inputs.target_environment || 'staging' }}
+              - **Triggered by:** ${{ github.actor }}
+              - **Source Commit:** ${{ github.sha }}
+              
+              ### ✅ Pre-deployment Validation:
+              - ✅ **Build & Test:** Passed
+              - ✅ **Security Scan:** Passed  
+              - ✅ **Manifest Validation:** Passed
+              - ✅ **Image Availability:** Verified
+              
+              ### 🔄 Next Steps:
+              1. Review the changes in this PR
+              2. Merge to trigger Argo CD sync
+              3. Monitor deployment in Argo CD dashboard
+              4. Verify application health post-deployment
+              
+              ---
+              *This PR was automatically created by the CI/CD pipeline.*`
+            });
             
-            ### 📦 Updated Images:
-            - **User Service:** \`${{ needs.gitops-preparation.outputs.user-image-tag }}\`
-            - **Order Service:** \`${{ needs.gitops-preparation.outputs.order-image-tag }}\`
+            console.log(`✅ Created PR #${pr.number}: ${pr.html_url}`);
+            core.setOutput('pr-number', pr.number);
+            core.setOutput('pr-url', pr.html_url);
             
-            ### 🎯 Deployment Configuration:
-            - **Strategy:** ${{ github.event.inputs.deployment_strategy || 'standard' }}
-            - **Environment:** ${{ github.event.inputs.target_environment || 'staging' }}
-            - **Triggered by:** ${{ github.actor }}
-            - **Source Commit:** ${{ github.sha }}
+          } catch (error) {
+            console.log('❌ Failed to create pull request:');
+            console.log(error.message);
+            console.log('');
+            console.log('🔧 Alternative actions:');
+            console.log('1. Manually create a PR from branch: ${{ needs.gitops-preparation.outputs.deployment-branch }}');
+            console.log('2. Merge the branch directly if auto-deployment is configured');
+            console.log('3. Check repository settings for Actions permissions');
+            console.log('');
+            console.log('📋 Branch information:');
+            console.log('- Source: ${{ needs.gitops-preparation.outputs.deployment-branch }}');
+            console.log('- Target: master');
+            console.log('- Changes: GitOps manifest updates');
             
-            ### ✅ Pre-deployment Validation:
-            - ✅ **Build & Test:** Passed
-            - ✅ **Security Scan:** Passed  
-            - ✅ **Manifest Validation:** Passed
-            - ✅ **Image Availability:** Verified
-            
-            ### 🔄 Next Steps:
-            1. Review the changes in this PR
-            2. Merge to trigger Argo CD sync
-            3. Monitor deployment in Argo CD dashboard
-            4. Verify application health post-deployment
-            
-            ---
-            *This PR was automatically created by the CI/CD pipeline.*`
-          });
+            // Don't fail the workflow, just log the error
+            core.warning('PR creation failed, but deployment branch was created successfully');
+          }
           
-          console.log(`Created PR #${pr.number}: ${pr.html_url}`);
+    - name: Deployment Summary
+      run: |
+        echo "## 🎉 GitOps Update Completed!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Updated Images:" >> $GITHUB_STEP_SUMMARY
+        echo "- **User Service:** \`${{ needs.gitops-preparation.outputs.user-image-tag }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Order Service:** \`${{ needs.gitops-preparation.outputs.order-image-tag }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🌿 Deployment Branch:" >> $GITHUB_STEP_SUMMARY
+        echo "- **Branch:** \`${{ needs.gitops-preparation.outputs.deployment-branch }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status:** ✅ Created and pushed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ steps.create-pr.outputs.pr-number }}" != "" ]; then
+          echo "### 🔄 Pull Request:" >> $GITHUB_STEP_SUMMARY
+          echo "- **PR #:** ${{ steps.create-pr.outputs.pr-number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** ${{ steps.create-pr.outputs.pr-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### ⚠️ Manual Action Required:" >> $GITHUB_STEP_SUMMARY
+          echo "PR creation failed. Please manually:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Create PR from branch \`${{ needs.gitops-preparation.outputs.deployment-branch }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "2. Or merge the branch directly for auto-deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "### 🚀 Next Steps:" >> $GITHUB_STEP_SUMMARY
+        echo "- Review and merge the deployment changes" >> $GITHUB_STEP_SUMMARY
+        echo "- Monitor Argo CD for automatic sync" >> $GITHUB_STEP_SUMMARY
+        echo "- Verify application health post-deployment" >> $GITHUB_STEP_SUMMARY
 
   # Stage 5: Deployment Validation
   deployment-validation:
