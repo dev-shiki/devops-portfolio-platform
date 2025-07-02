@@ -147,7 +147,6 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
-      metadata: read
       
     steps:
     - name: Checkout code
