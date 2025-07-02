@@ -1,0 +1,195 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Application settings
+  application.instanceLabelKey: argocd.argoproj.io/instance
+  
+  # Server configuration
+  server.insecure: "true"  # For local development
+  
+  # Repository settings
+  repositories: |
+    - type: git
+      url: https://github.com/argoproj/argocd-example-apps
+    - type: git
+      url: https://github.com/your-username/devops-portfolio  # Replace with your repo
+      
+  # GitOps configuration
+  policy.default: role:readonly
+  policy.csv: |
+    g, argocd-admins, role:admin
+    g, argocd-developers, role:readonly
+    
+  # Sync settings
+  timeout.reconciliation: 180s
+  timeout.hard.reconciliation: 0s
+  
+  # Git settings
+  git.timeout: 180s
+  
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cmd-params-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Server command parameters
+  server.insecure: "true"
+  server.grpc.web: "true"
+  
+  # Application controller parameters
+  application.namespaces: "devops-portfolio"
+  
+  # Repository server parameters
+  reposerver.parallelism.limit: "10"
+  
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-rbac-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  policy.default: role:readonly
+  policy.csv: |
+    # Default admin policy
+    p, role:admin, applications, *, */*, allow
+    p, role:admin, clusters, *, *, allow
+    p, role:admin, repositories, *, *, allow
+    
+    # Developer policy for portfolio project
+    p, role:developer, applications, get, devops-portfolio/*, allow
+    p, role:developer, applications, sync, devops-portfolio/*, allow
+    p, role:developer, applications, action, devops-portfolio/*, allow
+    
+    # Group mappings
+    g, argocd-admins, role:admin
+    g, portfolio-developers, role:developer
+    
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-secret
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-secret
+    app.kubernetes.io/part-of: argocd
+type: Opaque
+data:
+  # Default admin password (bcrypt hash of 'admin')
+  admin.password: $2a$10$rRyBsGSHK6.uc8fntPwVIuLiRfkqtdOVKRP9H3W.2C4Qq8VEOtbw6
+  admin.passwordMtime: MjAyNC0wMS0wMVQwMDowMDowMFo=
+  
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-redis
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: redis
+    app.kubernetes.io/name: argocd-redis
+    app.kubernetes.io/part-of: argocd
+spec:
+  ports:
+  - name: tcp-redis
+    port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    app.kubernetes.io/component: redis
+    app.kubernetes.io/name: argocd-redis
+    app.kubernetes.io/part-of: argocd
+    
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-repo-server
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: repo-server
+    app.kubernetes.io/name: argocd-repo-server
+    app.kubernetes.io/part-of: argocd
+spec:
+  ports:
+  - name: server
+    port: 8081
+    protocol: TCP
+    targetPort: 8081
+  - name: metrics
+    port: 8084
+    protocol: TCP
+    targetPort: 8084
+  selector:
+    app.kubernetes.io/component: repo-server
+    app.kubernetes.io/name: argocd-repo-server
+    app.kubernetes.io/part-of: argocd
+    
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-server
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: argocd-server
+    app.kubernetes.io/part-of: argocd
+spec:
+  ports:
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 8080
+  - name: grpc
+    port: 443
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: argocd-server
+    app.kubernetes.io/part-of: argocd
+  type: ClusterIP
+  
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-server-nodeport
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: argocd-server
+    app.kubernetes.io/part-of: argocd
+spec:
+  ports:
+  - name: https
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+    nodePort: 30080
+  - name: grpc
+    port: 8081
+    protocol: TCP
+    targetPort: 8080
+    nodePort: 30081
+  selector:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: argocd-server
+    app.kubernetes.io/part-of: argocd
+  type: NodePort 

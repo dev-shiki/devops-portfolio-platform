@@ -1,0 +1,185 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "github.com/devops-portfolio/user-service/proto";
+
+// User service definition
+service UserService {
+  // Get user by ID
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  
+  // List all users with pagination
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  
+  // Create new user
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+  
+  // Update existing user
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  
+  // Delete user
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+  
+  // Health check
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+  
+  // Get user metrics
+  rpc GetUserMetrics(GetUserMetricsRequest) returns (GetUserMetricsResponse);
+}
+
+// User message definition
+message User {
+  int64 id = 1;
+  string name = 2;
+  string email = 3;
+  string phone = 4;
+  string address = 5;
+  int64 created_at = 6;
+  int64 updated_at = 7;
+  UserStatus status = 8;
+}
+
+// User status enumeration
+enum UserStatus {
+  USER_STATUS_UNKNOWN = 0;
+  USER_STATUS_ACTIVE = 1;
+  USER_STATUS_INACTIVE = 2;
+  USER_STATUS_SUSPENDED = 3;
+}
+
+// Request/Response messages for GetUser
+message GetUserRequest {
+  int64 user_id = 1;
+  bool include_inactive = 2;
+}
+
+message GetUserResponse {
+  User user = 1;
+  ResponseMetadata metadata = 2;
+}
+
+// Request/Response messages for ListUsers
+message ListUsersRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  UserFilter filter = 3;
+  string sort_by = 4;
+  SortOrder sort_order = 5;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+  ResponseMetadata metadata = 4;
+}
+
+// Request/Response messages for CreateUser
+message CreateUserRequest {
+  string name = 1;
+  string email = 2;
+  string phone = 3;
+  string address = 4;
+  UserStatus initial_status = 5;
+}
+
+message CreateUserResponse {
+  User user = 1;
+  ResponseMetadata metadata = 2;
+}
+
+// Request/Response messages for UpdateUser
+message UpdateUserRequest {
+  int64 user_id = 1;
+  User user = 2;
+  repeated string update_mask = 3;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+  ResponseMetadata metadata = 2;
+}
+
+// Request/Response messages for DeleteUser
+message DeleteUserRequest {
+  int64 user_id = 1;
+  bool soft_delete = 2;
+}
+
+message DeleteUserResponse {
+  bool success = 1;
+  ResponseMetadata metadata = 2;
+}
+
+// Request/Response messages for HealthCheck
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  HealthStatus status = 1;
+  string message = 2;
+  map<string, string> details = 3;
+  ResponseMetadata metadata = 4;
+}
+
+// Request/Response messages for GetUserMetrics
+message GetUserMetricsRequest {
+  int64 start_time = 1;
+  int64 end_time = 2;
+  repeated string metric_types = 3;
+}
+
+message GetUserMetricsResponse {
+  UserMetrics metrics = 1;
+  ResponseMetadata metadata = 2;
+}
+
+// Supporting message types
+message UserFilter {
+  UserStatus status = 1;
+  string email_domain = 2;
+  int64 created_after = 3;
+  int64 created_before = 4;
+  string search_query = 5;
+}
+
+message UserMetrics {
+  int32 total_users = 1;
+  int32 active_users = 2;
+  int32 new_users_today = 3;
+  int32 new_users_week = 4;
+  int32 new_users_month = 5;
+  repeated DailyUserStats daily_stats = 6;
+}
+
+message DailyUserStats {
+  string date = 1;
+  int32 new_users = 2;
+  int32 active_users = 3;
+  int32 deleted_users = 4;
+}
+
+message ResponseMetadata {
+  string request_id = 1;
+  int64 timestamp = 2;
+  int32 processing_time_ms = 3;
+  string version = 4;
+  string trace_id = 5;
+  string span_id = 6;
+}
+
+// Enumerations
+enum HealthStatus {
+  HEALTH_STATUS_UNKNOWN = 0;
+  HEALTH_STATUS_SERVING = 1;
+  HEALTH_STATUS_NOT_SERVING = 2;
+  HEALTH_STATUS_SERVICE_UNKNOWN = 3;
+}
+
+enum SortOrder {
+  SORT_ORDER_UNSPECIFIED = 0;
+  SORT_ORDER_ASC = 1;
+  SORT_ORDER_DESC = 2;
+} 

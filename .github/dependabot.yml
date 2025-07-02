@@ -1,0 +1,98 @@
+version: 2
+updates:
+  # Enable version updates for Go modules
+  - package-ecosystem: "gomod"
+    directory: "/user-service"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "02:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "devops-team"
+    assignees:
+      - "security-team"
+    commit-message:
+      prefix: "🔒 security"
+      prefix-development: "🚀 deps"
+    labels:
+      - "dependencies"
+      - "security"
+    allow:
+      - dependency-type: "all"
+    ignore:
+      # Ignore major version updates for stable dependencies
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+        
+  - package-ecosystem: "gomod"
+    directory: "/order-service"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "02:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "devops-team"
+    assignees:
+      - "security-team"
+    commit-message:
+      prefix: "🔒 security"
+      prefix-development: "🚀 deps"
+    labels:
+      - "dependencies"
+      - "security"
+    allow:
+      - dependency-type: "all"
+    ignore:
+      # Ignore major version updates for stable dependencies
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "02:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "devops-team"
+    commit-message:
+      prefix: "🔧 ci"
+      include: "scope"
+    labels:
+      - "github-actions"
+      - "ci-cd"
+
+  # Enable version updates for Docker
+  - package-ecosystem: "docker"
+    directory: "/user-service"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "02:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "devops-team"
+    commit-message:
+      prefix: "🐳 docker"
+    labels:
+      - "docker"
+      - "security"
+      
+  - package-ecosystem: "docker"
+    directory: "/order-service"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "02:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "devops-team"
+    commit-message:
+      prefix: "🐳 docker"
+    labels:
+      - "docker"
+      - "security" 

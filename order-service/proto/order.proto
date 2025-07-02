@@ -1,0 +1,258 @@
+syntax = "proto3";
+
+package order;
+
+option go_package = "github.com/devops-portfolio/order-service/proto";
+
+import "google/protobuf/timestamp.proto";
+
+// Order service definition
+service OrderService {
+  // Get order by ID
+  rpc GetOrder(GetOrderRequest) returns (GetOrderResponse);
+  
+  // List orders with filtering and pagination
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
+  
+  // Create new order
+  rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
+  
+  // Update order status
+  rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (UpdateOrderStatusResponse);
+  
+  // Cancel order
+  rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse);
+  
+  // Get orders by user ID
+  rpc GetOrdersByUser(GetOrdersByUserRequest) returns (GetOrdersByUserResponse);
+  
+  // Health check
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+  
+  // Get order metrics
+  rpc GetOrderMetrics(GetOrderMetricsRequest) returns (GetOrderMetricsResponse);
+}
+
+// Order message definition
+message Order {
+  int64 id = 1;
+  int64 user_id = 2;
+  string product_name = 3;
+  int32 quantity = 4;
+  double price = 5;
+  double total_amount = 6;
+  OrderStatus status = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+  string notes = 10;
+}
+
+// Order item for complex orders
+message OrderItem {
+  int64 id = 1;
+  string product_id = 2;
+  string product_name = 3;
+  int32 quantity = 4;
+  double unit_price = 5;
+  double total_price = 6;
+  map<string, string> attributes = 7;
+}
+
+// Payment information
+message PaymentInfo {
+  string payment_id = 1;
+  PaymentMethod method = 2;
+  PaymentStatus status = 3;
+  double amount = 4;
+  string currency = 5;
+  google.protobuf.Timestamp processed_at = 6;
+  string transaction_ref = 7;
+}
+
+// Shipping information
+message ShippingInfo {
+  string address = 1;
+  string city = 2;
+  string postal_code = 3;
+  string country = 4;
+  ShippingMethod method = 5;
+  double shipping_cost = 6;
+  string tracking_number = 7;
+  google.protobuf.Timestamp estimated_delivery = 8;
+}
+
+// Order status enumeration
+enum OrderStatus {
+  ORDER_STATUS_UNKNOWN = 0;
+  ORDER_STATUS_PENDING = 1;
+  ORDER_STATUS_CONFIRMED = 2;
+  ORDER_STATUS_PROCESSING = 3;
+  ORDER_STATUS_SHIPPED = 4;
+  ORDER_STATUS_DELIVERED = 5;
+  ORDER_STATUS_CANCELLED = 6;
+}
+
+// Payment method enumeration
+enum PaymentMethod {
+  PAYMENT_METHOD_UNKNOWN = 0;
+  PAYMENT_METHOD_CREDIT_CARD = 1;
+  PAYMENT_METHOD_DEBIT_CARD = 2;
+  PAYMENT_METHOD_BANK_TRANSFER = 3;
+  PAYMENT_METHOD_DIGITAL_WALLET = 4;
+  PAYMENT_METHOD_CRYPTOCURRENCY = 5;
+}
+
+// Payment status enumeration
+enum PaymentStatus {
+  PAYMENT_STATUS_UNKNOWN = 0;
+  PAYMENT_STATUS_PENDING = 1;
+  PAYMENT_STATUS_PROCESSING = 2;
+  PAYMENT_STATUS_COMPLETED = 3;
+  PAYMENT_STATUS_FAILED = 4;
+  PAYMENT_STATUS_CANCELLED = 5;
+  PAYMENT_STATUS_REFUNDED = 6;
+}
+
+// Shipping method enumeration
+enum ShippingMethod {
+  SHIPPING_METHOD_UNKNOWN = 0;
+  SHIPPING_METHOD_STANDARD = 1;
+  SHIPPING_METHOD_EXPRESS = 2;
+  SHIPPING_METHOD_OVERNIGHT = 3;
+  SHIPPING_METHOD_PICKUP = 4;
+}
+
+// Request/Response messages for GetOrder
+message GetOrderRequest {
+  int64 order_id = 1;
+}
+
+message GetOrderResponse {
+  Order order = 1;
+  ResponseMetadata metadata = 2;
+}
+
+// Request/Response messages for ListOrders
+message ListOrdersRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListOrdersResponse {
+  repeated Order orders = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+  ResponseMetadata metadata = 4;
+}
+
+// Request/Response messages for CreateOrder
+message CreateOrderRequest {
+  int64 user_id = 1;
+  string product_name = 2;
+  int32 quantity = 3;
+  double price = 4;
+  string notes = 5;
+}
+
+message CreateOrderResponse {
+  Order order = 1;
+  ResponseMetadata metadata = 2;
+}
+
+// Request/Response messages for UpdateOrderStatus
+message UpdateOrderStatusRequest {
+  int64 order_id = 1;
+  OrderStatus new_status = 2;
+  string reason = 3;
+}
+
+message UpdateOrderStatusResponse {
+  Order order = 1;
+  ResponseMetadata metadata = 2;
+}
+
+// Request/Response messages for CancelOrder
+message CancelOrderRequest {
+  int64 order_id = 1;
+  string reason = 2;
+}
+
+message CancelOrderResponse {
+  bool success = 1;
+  Order order = 2;
+  ResponseMetadata metadata = 3;
+}
+
+// Request/Response messages for GetOrdersByUser
+message GetOrdersByUserRequest {
+  int64 user_id = 1;
+  int32 limit = 2;
+  OrderStatus status_filter = 3;
+}
+
+message GetOrdersByUserResponse {
+  repeated Order orders = 1;
+  int32 total_count = 2;
+  ResponseMetadata metadata = 3;
+}
+
+// Request/Response messages for HealthCheck
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  HealthStatus status = 1;
+  string message = 2;
+  map<string, string> details = 3;
+  ResponseMetadata metadata = 4;
+}
+
+// Request/Response messages for GetOrderMetrics
+message GetOrderMetricsRequest {
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+  repeated string metric_types = 3;
+}
+
+message GetOrderMetricsResponse {
+  OrderMetrics metrics = 1;
+  ResponseMetadata metadata = 2;
+}
+
+// Supporting message types
+message OrderFilter {
+  OrderStatus status = 1;
+  int64 user_id = 2;
+  google.protobuf.Timestamp created_after = 3;
+  google.protobuf.Timestamp created_before = 4;
+  double min_amount = 5;
+  double max_amount = 6;
+  PaymentStatus payment_status = 7;
+}
+
+message OrderMetrics {
+  int32 total_orders = 1;
+  int32 pending_orders = 2;
+  int32 completed_orders = 3;
+  int32 cancelled_orders = 4;
+  double total_revenue = 5;
+  double average_order_value = 6;
+}
+
+message ResponseMetadata {
+  string request_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  int32 processing_time_ms = 3;
+  string version = 4;
+  string trace_id = 5;
+  string span_id = 6;
+}
+
+// Enumerations
+enum HealthStatus {
+  HEALTH_STATUS_UNKNOWN = 0;
+  HEALTH_STATUS_SERVING = 1;
+  HEALTH_STATUS_NOT_SERVING = 2;
+  HEALTH_STATUS_SERVICE_UNKNOWN = 3;
+} 

@@ -1,0 +1,135 @@
+groups:
+  - name: devops-portfolio.recording_rules
+    interval: 30s
+    rules:
+      # HTTP request rate recording rules
+      - record: devops:http_requests_rate5m
+        expr: |
+          rate(http_requests_total[5m])
+        labels:
+          aggregation: rate5m
+
+      - record: devops:http_requests_rate1h
+        expr: |
+          rate(http_requests_total[1h])
+        labels:
+          aggregation: rate1h
+
+      # Error rate recording rules
+      - record: devops:http_error_rate5m
+        expr: |
+          rate(http_requests_total{status=~"5.."}[5m]) / 
+          rate(http_requests_total[5m])
+        labels:
+          aggregation: error_rate5m
+
+      - record: devops:http_error_rate1h
+        expr: |
+          rate(http_requests_total{status=~"5.."}[1h]) / 
+          rate(http_requests_total[1h])
+        labels:
+          aggregation: error_rate1h
+
+      # Latency percentiles
+      - record: devops:http_latency_p50_5m
+        expr: |
+          histogram_quantile(0.50, 
+            rate(http_request_duration_seconds_bucket[5m])
+          )
+        labels:
+          quantile: "50"
+          aggregation: latency5m
+
+      - record: devops:http_latency_p95_5m
+        expr: |
+          histogram_quantile(0.95, 
+            rate(http_request_duration_seconds_bucket[5m])
+          )
+        labels:
+          quantile: "95"
+          aggregation: latency5m
+
+      - record: devops:http_latency_p99_5m
+        expr: |
+          histogram_quantile(0.99, 
+            rate(http_request_duration_seconds_bucket[5m])
+          )
+        labels:
+          quantile: "99"
+          aggregation: latency5m
+
+      # Service availability
+      - record: devops:service_availability_5m
+        expr: |
+          avg_over_time(up[5m])
+        labels:
+          aggregation: availability5m
+
+      - record: devops:service_availability_1h
+        expr: |
+          avg_over_time(up[1h])
+        labels:
+          aggregation: availability1h
+
+      - record: devops:service_availability_24h
+        expr: |
+          avg_over_time(up[24h])
+        labels:
+          aggregation: availability24h
+
+      # Resource utilization
+      - record: devops:cpu_usage_rate5m
+        expr: |
+          rate(container_cpu_usage_seconds_total{name!=""}[5m]) * 100
+        labels:
+          aggregation: cpu_rate5m
+
+      - record: devops:memory_usage_percent
+        expr: |
+          (
+            container_memory_usage_bytes{name!=""} / 
+            container_spec_memory_limit_bytes{name!=""} * 100
+          )
+        labels:
+          aggregation: memory_usage
+
+      # Business metrics
+      - record: devops:user_registrations_rate5m
+        expr: |
+          rate(user_registrations_total[5m])
+        labels:
+          aggregation: user_registrations5m
+
+      - record: devops:orders_created_rate5m
+        expr: |
+          rate(orders_created_total[5m])
+        labels:
+          aggregation: orders_created5m
+
+      - record: devops:orders_completed_rate5m
+        expr: |
+          rate(orders_completed_total[5m])
+        labels:
+          aggregation: orders_completed5m
+
+      # SLA calculation rules
+      - record: devops:sla_availability_target
+        expr: |
+          devops:service_availability_24h >= 0.99
+        labels:
+          sla_type: availability
+          target: "99%"
+
+      - record: devops:sla_latency_target
+        expr: |
+          devops:http_latency_p95_5m <= 0.5
+        labels:
+          sla_type: latency
+          target: "500ms"
+
+      - record: devops:sla_error_rate_target
+        expr: |
+          devops:http_error_rate1h <= 0.01
+        labels:
+          sla_type: error_rate
+          target: "1%" 

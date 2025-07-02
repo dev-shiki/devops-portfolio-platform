@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: devops-portfolio
+  labels:
+    app: order-service
+    version: v1.0.0
+    environment: production
+    managed-by: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    app.kubernetes.io/name: order-service
+    app.kubernetes.io/part-of: devops-portfolio
+    app.kubernetes.io/version: "v1.0.0"
+    app.kubernetes.io/managed-by: argocd
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+        version: v1.0.0
+        environment: production
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8081"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      containers:
+      - name: order-service
+        image: ghcr.io/your-username/devops-portfolio/order-service:latest  # Replace with your image
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8081
+          name: http
+          protocol: TCP
+        env:
+        - name: PORT
+          value: "8081"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: ENVIRONMENT
+          value: "production"
+        - name: SERVICE_NAME
+          value: "order-service"
+        - name: USER_SERVICE_URL
+          value: "http://user-service:80"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: devops-portfolio
+  labels:
+    app: order-service
+    environment: production
+    managed-by: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    app.kubernetes.io/name: order-service
+    app.kubernetes.io/part-of: devops-portfolio
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8081
+    protocol: TCP
+    name: http
+  selector:
+    app: order-service 

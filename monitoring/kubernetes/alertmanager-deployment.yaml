@@ -1,0 +1,293 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+  labels:
+    app: alertmanager
+data:
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: 'localhost:587'
+      smtp_from: 'alerts@devops-portfolio.local'
+      smtp_auth_username: 'alertmanager@devops-portfolio.local'
+      smtp_auth_password: 'password'
+
+    route:
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'web.hook'
+      routes:
+      - match:
+          severity: critical
+        receiver: 'critical-alerts'
+        group_wait: 5s
+        repeat_interval: 30m
+      - match:
+          severity: warning
+        receiver: 'warning-alerts'
+        group_wait: 10s
+        repeat_interval: 2h
+      - match:
+          team: devops
+        receiver: 'devops-team'
+      - match:
+          type: sla
+        receiver: 'sla-alerts'
+        group_wait: 5s
+        repeat_interval: 15m
+
+    receivers:
+    - name: 'web.hook'
+      webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+        http_config:
+          bearer_token: 'webhook-token'
+        title: 'DevOps Portfolio Alert'
+        text: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Service: {{ .Labels.service }}
+          {{ end }}
+
+    - name: 'critical-alerts'
+      email_configs:
+      - to: 'devops-team@company.com'
+        subject: '🚨 CRITICAL: {{ .GroupLabels.alertname }} in {{ .GroupLabels.cluster }}'
+        body: |
+          🚨 **CRITICAL ALERT** 🚨
+
+          **Alert:** {{ .GroupLabels.alertname }}
+          **Cluster:** {{ .GroupLabels.cluster }}
+          **Environment:** production
+
+          **Details:**
+          {{ range .Alerts }}
+          - **Service:** {{ .Labels.service }}
+          - **Summary:** {{ .Annotations.summary }}
+          - **Description:** {{ .Annotations.description }}
+          - **Started:** {{ .StartsAt }}
+          {{ if .Labels.runbook_url }}
+          - **Runbook:** {{ .Labels.runbook_url }}
+          {{ end }}
+          {{ end }}
+
+          **Action Required:** Immediate intervention needed!
+      slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alerts-critical'
+        title: '🚨 Critical Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Service:* {{ .Labels.service }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        color: 'danger'
+        send_resolved: true
+
+    - name: 'warning-alerts'
+      email_configs:
+      - to: 'devops-team@company.com'
+        subject: '⚠️ WARNING: {{ .GroupLabels.alertname }} in {{ .GroupLabels.cluster }}'
+        body: |
+          ⚠️ **WARNING ALERT** ⚠️
+
+          **Alert:** {{ .GroupLabels.alertname }}
+          **Cluster:** {{ .GroupLabels.cluster }}
+          **Environment:** production
+
+          **Details:**
+          {{ range .Alerts }}
+          - **Service:** {{ .Labels.service }}
+          - **Summary:** {{ .Annotations.summary }}
+          - **Description:** {{ .Annotations.description }}
+          - **Started:** {{ .StartsAt }}
+          {{ end }}
+
+          **Action:** Investigation recommended
+      slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alerts-warning'
+        title: '⚠️ Warning: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Service:* {{ .Labels.service }}
+          *Summary:* {{ .Annotations.summary }}
+          {{ end }}
+        color: 'warning'
+
+    - name: 'devops-team'
+      email_configs:
+      - to: 'devops-team@company.com'
+        subject: 'DevOps Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          **DevOps Team Alert**
+
+          **Alert:** {{ .GroupLabels.alertname }}
+          **Team:** {{ .GroupLabels.team }}
+
+          {{ range .Alerts }}
+          - **Service:** {{ .Labels.service }}
+          - **Summary:** {{ .Annotations.summary }}
+          - **Description:** {{ .Annotations.description }}
+          {{ end }}
+
+    - name: 'sla-alerts'
+      email_configs:
+      - to: 'sla-manager@company.com,devops-team@company.com'
+        subject: '📊 SLA Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          📊 **SLA BREACH ALERT** 📊
+
+          **Alert:** {{ .GroupLabels.alertname }}
+          **Type:** {{ .GroupLabels.type }}
+
+          {{ range .Alerts }}
+          - **Service:** {{ .Labels.service }}
+          - **Summary:** {{ .Annotations.summary }}
+          - **Impact:** {{ .Annotations.impact }}
+          - **Started:** {{ .StartsAt }}
+          {{ end }}
+
+          **Business Impact:** SLA targets not being met
+          **Action Required:** Immediate escalation to management
+      slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#sla-alerts'
+        title: '📊 SLA Breach: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Service:* {{ .Labels.service }}
+          *Impact:* {{ .Annotations.impact }}
+          *Summary:* {{ .Annotations.summary }}
+          {{ end }}
+        color: 'danger'
+
+    inhibit_rules:
+    - source_match:
+        severity: 'critical'
+      target_match:
+        severity: 'warning'
+      equal: ['alertname', 'cluster', 'service']
+
+    - source_match:
+        alertname: 'ServiceDown'
+      target_match_re:
+        alertname: 'HighErrorRate|HighLatency'
+      equal: ['service']
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+    component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9093"
+    spec:
+      containers:
+      - name: alertmanager
+        image: prom/alertmanager:v0.25.0
+        args:
+          - '--config.file=/etc/alertmanager/alertmanager.yml'
+          - '--storage.path=/alertmanager'
+          - '--web.external-url=http://localhost:9093'
+          - '--cluster.listen-address=0.0.0.0:9094'
+          - '--log.level=info'
+        ports:
+        - containerPort: 9093
+          name: web
+        - containerPort: 9094
+          name: cluster
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        volumeMounts:
+        - name: alertmanager-config
+          mountPath: /etc/alertmanager
+        - name: alertmanager-storage
+          mountPath: /alertmanager
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9093
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9093
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+      volumes:
+      - name: alertmanager-config
+        configMap:
+          name: alertmanager-config
+      - name: alertmanager-storage
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager-service
+  namespace: monitoring
+  labels:
+    app: alertmanager
+    component: monitoring
+spec:
+  selector:
+    app: alertmanager
+  ports:
+  - name: web
+    port: 9093
+    targetPort: 9093
+    protocol: TCP
+  - name: cluster
+    port: 9094
+    targetPort: 9094
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager-external
+  namespace: monitoring
+  labels:
+    app: alertmanager
+    access: external
+spec:
+  selector:
+    app: alertmanager
+  ports:
+  - name: web
+    port: 9093
+    targetPort: 9093
+    nodePort: 30093
+    protocol: TCP
+  type: NodePort 

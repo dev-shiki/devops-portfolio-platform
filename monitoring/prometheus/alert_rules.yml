@@ -1,0 +1,184 @@
+groups:
+  - name: devops-portfolio.alerts
+    rules:
+      # Service availability alerts
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+          service: "{{ $labels.job }}"
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} has been down for more than 1 minute"
+          runbook_url: "https://github.com/your-org/runbooks/service-down"
+
+      - alert: HighErrorRate
+        expr: |
+          (
+            rate(http_requests_total{status=~"5.."}[5m]) / 
+            rate(http_requests_total[5m])
+          ) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: devops
+          service: "{{ $labels.job }}"
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "Error rate is {{ $value }}% for {{ $labels.job }}"
+          runbook_url: "https://github.com/your-org/runbooks/high-error-rate"
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            rate(http_request_duration_seconds_bucket[5m])
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          team: devops
+          service: "{{ $labels.job }}"
+        annotations:
+          summary: "High latency on {{ $labels.job }}"
+          description: "95th percentile latency is {{ $value }}s for {{ $labels.job }}"
+          runbook_url: "https://github.com/your-org/runbooks/high-latency"
+
+      # Resource usage alerts
+      - alert: HighCPUUsage
+        expr: |
+          (
+            rate(container_cpu_usage_seconds_total{name!=""}[5m]) * 100
+          ) > 80
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High CPU usage on {{ $labels.name }}"
+          description: "CPU usage is {{ $value }}% for container {{ $labels.name }}"
+
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            container_memory_usage_bytes{name!=""} / 
+            container_spec_memory_limit_bytes{name!=""} * 100
+          ) > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High memory usage on {{ $labels.name }}"
+          description: "Memory usage is {{ $value }}% for container {{ $labels.name }}"
+
+      - alert: DiskSpaceRunningLow
+        expr: |
+          (
+            node_filesystem_avail_bytes{fstype!="tmpfs"} / 
+            node_filesystem_size_bytes{fstype!="tmpfs"} * 100
+          ) < 20
+        for: 15m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Disk space running low on {{ $labels.instance }}"
+          description: "Disk space is {{ $value }}% full on {{ $labels.instance }}"
+
+      # Application-specific alerts
+      - alert: UserServiceUnhealthy
+        expr: |
+          up{job="user-service"} == 0 or 
+          increase(http_requests_total{job="user-service",status=~"5.."}[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+          team: devops
+          service: user-service
+        annotations:
+          summary: "User Service is unhealthy"
+          description: "User Service is down or experiencing high error rates"
+          impact: "User operations are affected"
+          action: "Check service logs and restart if necessary"
+
+      - alert: OrderServiceUnhealthy
+        expr: |
+          up{job="order-service"} == 0 or 
+          increase(http_requests_total{job="order-service",status=~"5.."}[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+          team: devops
+          service: order-service
+        annotations:
+          summary: "Order Service is unhealthy"
+          description: "Order Service is down or experiencing high error rates"
+          impact: "Order processing is affected"
+          action: "Check service logs and restart if necessary"
+
+      # Infrastructure alerts
+      - alert: KubernetesNodeNotReady
+        expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Kubernetes node {{ $labels.node }} is not ready"
+          description: "Node {{ $labels.node }} has been not ready for more than 5 minutes"
+
+      - alert: KubernetesPodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Pod {{ $labels.pod }} is crash looping"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is restarting frequently"
+
+      - alert: KubernetesPodNotRunning
+        expr: |
+          kube_pod_status_phase{phase!="Running",phase!="Succeeded"} == 1
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Pod {{ $labels.pod }} is not running"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is in {{ $labels.phase }} phase"
+
+  - name: devops-portfolio.sla
+    rules:
+      # SLA tracking rules
+      - alert: SLABreach
+        expr: |
+          (
+            avg_over_time(up{job=~"user-service|order-service"}[30m]) < 0.99
+          )
+        for: 5m
+        labels:
+          severity: critical
+          team: devops
+          type: sla
+        annotations:
+          summary: "SLA breach detected for {{ $labels.job }}"
+          description: "Service availability is below 99% SLA threshold"
+          impact: "SLA commitments are not being met"
+
+      - alert: ResponseTimeSLA
+        expr: |
+          histogram_quantile(0.95, 
+            rate(http_request_duration_seconds_bucket{job=~"user-service|order-service"}[5m])
+          ) > 1.0
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+          type: sla
+        annotations:
+          summary: "Response time SLA breach for {{ $labels.job }}"
+          description: "95th percentile response time exceeds 1 second SLA"
+          impact: "User experience may be degraded" 

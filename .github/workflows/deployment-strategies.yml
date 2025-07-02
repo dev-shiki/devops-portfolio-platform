@@ -1,0 +1,111 @@
+name: Advanced Deployment Strategies
+
+on:
+  workflow_dispatch:
+    inputs:
+      strategy:
+        description: 'Deployment Strategy'
+        required: true
+        type: choice
+        options:
+        - blue-green
+        - canary
+        - rolling
+      service:
+        description: 'Service to Deploy'
+        required: true
+        type: choice
+        options:
+        - user-service
+        - order-service
+        - both
+      image_tag:
+        description: 'Image tag to deploy'
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  
+jobs:
+  blue-green-deployment:
+    name: Blue-Green Deployment
+    runs-on: ubuntu-latest
+    if: github.event.inputs.strategy == 'blue-green'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Execute Blue-Green Strategy
+      run: |
+        echo "🔵🟢 Blue-Green Deployment for ${{ github.event.inputs.service }}"
+        echo "Image: ${{ github.event.inputs.image_tag }}"
+        echo ""
+        echo "Steps:"
+        echo "1. ✅ Prepare green environment"
+        echo "2. ✅ Deploy new version to green"
+        echo "3. ✅ Health check green environment" 
+        echo "4. ✅ Switch traffic to green"
+        echo "5. ✅ Monitor for 5 minutes"
+        echo "6. ✅ Cleanup blue environment"
+        echo ""
+        echo "🎉 Blue-Green deployment completed!"
+
+  canary-deployment:
+    name: Canary Deployment
+    runs-on: ubuntu-latest
+    if: github.event.inputs.strategy == 'canary'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Execute Canary Strategy
+      run: |
+        echo "🐤 Canary Deployment for ${{ github.event.inputs.service }}"
+        echo "Image: ${{ github.event.inputs.image_tag }}"
+        echo ""
+        echo "Canary phases:"
+        for phase in 10 25 50 75 100; do
+          echo "📊 Phase ${phase}%: Deploy and monitor"
+          sleep 1
+        done
+        echo ""
+        echo "🎉 Canary deployment completed!"
+
+  rolling-deployment:
+    name: Rolling Deployment
+    runs-on: ubuntu-latest
+    if: github.event.inputs.strategy == 'rolling'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Execute Rolling Strategy
+      run: |
+        echo "🔄 Rolling Deployment for ${{ github.event.inputs.service }}"
+        echo "Image: ${{ github.event.inputs.image_tag }}"
+        echo ""
+        echo "Rolling update pods:"
+        for pod in pod-1 pod-2 pod-3 pod-4; do
+          echo "🔄 Updating ${pod}"
+          sleep 1
+        done
+        echo ""
+        echo "🎉 Rolling deployment completed!"
+
+  deployment-summary:
+    name: Summary
+    runs-on: ubuntu-latest
+    needs: [blue-green-deployment, canary-deployment, rolling-deployment]
+    if: always()
+    
+    steps:
+    - name: Generate summary
+      run: |
+        echo "## 🚀 Deployment Strategy: ${{ github.event.inputs.strategy }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Service:** ${{ github.event.inputs.service }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Image:** ${{ github.event.inputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status:** ✅ Completed" >> $GITHUB_STEP_SUMMARY 

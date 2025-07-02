@@ -1,0 +1,101 @@
+# DevOps Portfolio Project .gitignore
+
+# Base requirements and step files (not needed in portfolio)
+base.md
+step.md
+
+# Binaries and Build Artifacts
+*/bin/
+**/bin/
+*.exe
+*.dll
+*.so
+*.dylib
+user-service/bin/
+order-service/bin/
+
+# Go build cache
+.cache/
+go.sum.backup
+
+# Test output
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Docker artifacts
+.docker/
+
+# Kubernetes local artifacts
+*.local.yaml
+*.local.yml
+
+# Monitoring temporary files
+monitoring/temp/
+monitoring/*.tmp
+
+# Scripts temporary files
+scripts/temp/
+scripts/*.tmp
+
+# Kind cluster config (if contains sensitive info)
+kind-config.local.yaml
+
+# Windows executable downloaded
+kind.exe
+
+# Helm charts (if any)
+charts/
+*.tgz
+
+# ArgoCD local configs
+argocd-local/
+
+# Grafana local data
+grafana-data/
+
+# Prometheus local data
+prometheus-data/
+
+# Local testing artifacts
+test-results/
+test-output/
+
+# Backup files
+*.backup
+*.bak 

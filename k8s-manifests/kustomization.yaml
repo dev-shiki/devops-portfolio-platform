@@ -1,0 +1,37 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: devops-portfolio
+  namespace: devops-portfolio
+
+# Target namespace for all resources
+namespace: devops-portfolio
+
+# Resources to include
+resources:
+  - namespace.yaml
+  - user-service-deployment.yaml
+  - order-service-deployment.yaml
+  - external-access.yaml
+
+# Common labels for all resources
+commonLabels:
+  project: devops-portfolio
+  version: v1.0.0
+  environment: development
+
+# Images to use (override default)
+images:
+  - name: user-service
+    newTag: latest
+  - name: order-service
+    newTag: latest
+
+# ConfigMap generator for common config
+configMapGenerator:
+  - name: app-config
+    literals:
+      - LOG_LEVEL=info
+      - ENVIRONMENT=development
+      - PROJECT_NAME=devops-portfolio 
