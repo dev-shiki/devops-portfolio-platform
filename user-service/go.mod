@@ -1,6 +1,6 @@
 module user-service
 
-go 1.21
+go 1.22
 
 require (
 	github.com/gorilla/mux v1.8.1
@@ -15,5 +15,5 @@ require (
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 )
