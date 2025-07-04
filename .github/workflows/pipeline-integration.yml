@@ -217,7 +217,7 @@ jobs:
         
         # Update user service if changed
         if [ "${{ needs.code-quality.outputs.user-service-changed }}" == "true" ]; then
-          USER_TAG="${{ needs.build-package.outputs.user-tag }}"
+          USER_TAG="${{ needs.build-package.outputs.user-image-tag }}"
           sed -i "s|user-service:.*|user-service:${USER_TAG}|g" gitops/manifests/user-service/deployment.yaml
           echo "✅ Updated user-service to: ${USER_TAG}"
           UPDATED=true
@@ -225,7 +225,7 @@ jobs:
         
         # Update order service if changed
         if [ "${{ needs.code-quality.outputs.order-service-changed }}" == "true" ]; then
-          ORDER_TAG="${{ needs.build-package.outputs.order-tag }}"
+          ORDER_TAG="${{ needs.build-package.outputs.order-image-tag }}"
           sed -i "s|order-service:.*|order-service:${ORDER_TAG}|g" gitops/manifests/order-service/deployment.yaml
           echo "✅ Updated order-service to: ${ORDER_TAG}"
           UPDATED=true
@@ -238,8 +238,8 @@ jobs:
           git add gitops/manifests/
           git commit -m "🚀 Pipeline: Update service images
           
-          User service: ${{ needs.build-package.outputs.user-tag }}
-          Order service: ${{ needs.build-package.outputs.order-tag }}
+          User service: ${{ needs.build-package.outputs.user-image-tag }}
+          Order service: ${{ needs.build-package.outputs.order-image-tag }}
           Target: ${{ inputs.deployment_target || 'staging' }}"
           
           git push origin "$BRANCH"
@@ -255,6 +255,11 @@ jobs:
     - name: Create deployment PR
       if: env.UPDATE_MADE == 'true'
       uses: actions/github-script@v7
+      env:
+        USER_SERVICE_CHANGED: ${{ needs.code-quality.outputs.user-service-changed }}
+        ORDER_SERVICE_CHANGED: ${{ needs.code-quality.outputs.order-service-changed }}
+        USER_IMAGE_TAG: ${{ needs.build-package.outputs.user-image-tag }}
+        ORDER_IMAGE_TAG: ${{ needs.build-package.outputs.order-image-tag }}
       with:
         script: |
           await github.rest.pulls.create({
@@ -266,8 +271,8 @@ jobs:
             body: `## 🚀 Automated Pipeline Deployment
             
             ### 📦 Updated Services:
-            ${context.payload.outputs.user_service_changed === 'true' ? `- **User Service:** \`${process.env.USER_TAG}\`` : ''}
-            ${context.payload.outputs.order_service_changed === 'true' ? `- **Order Service:** \`${process.env.ORDER_TAG}\`` : ''}
+            ${process.env.USER_SERVICE_CHANGED === 'true' ? `- **User Service:** \`${process.env.USER_IMAGE_TAG}\`` : ''}
+            ${process.env.ORDER_SERVICE_CHANGED === 'true' ? `- **Order Service:** \`${process.env.ORDER_IMAGE_TAG}\`` : ''}
             
             ### 🎯 Target Environment: ${{ inputs.deployment_target || 'staging' }}
             
