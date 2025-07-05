@@ -1,3 +1,22 @@
+/*
+ * DevOps Portfolio Platform - Order Service
+ * 
+ * Author: dev-shiki (Your Personal Portfolio)
+ * Created: 2025-01-27 (Portfolio Development Session)
+ * Project: PORTFOLIO-DEVOPS-2025-V1
+ * License: MIT
+ * 
+ * Personal Signature: DSK-PORTFOLIO-2025-ORDER-SVC-ORIG
+ * Build Timestamp: 2025-01-27T12:00:00Z
+ * 
+ * This is an original work created for professional portfolio demonstration.
+ * Implementation showcases enterprise-grade microservices architecture
+ * with comprehensive monitoring, observability, and DevOps best practices.
+ * 
+ * Contact: github.com/dev-shiki
+ * Portfolio: DevOps Engineering & Cloud Architecture
+ */
+
 package main
 
 import (
@@ -336,12 +355,67 @@ func (s *OrderStore) handleUpdateOrderStatus(w http.ResponseWriter, r *http.Requ
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	response := map[string]string{
-		"status":    "healthy",
-		"service":   "order-service",
+		"status":           "healthy",
+		"service":          "order-service",
+		"timestamp":        time.Now().Format(time.RFC3339),
+		"author":           "dev-shiki",
+		"project_id":       "PORTFOLIO-DEVOPS-2025-V1",
+		"signature":        "DSK-PORTFOLIO-2025-ORDER-SVC-ORIG",
+		"build_version":    "v1.0.0-portfolio",
+		"portfolio_tag":    "DevOps-Engineering-Showcase",
+		"contact":          "github.com/dev-shiki",
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Author", "dev-shiki")
+	w.Header().Set("X-Portfolio-Project", "PORTFOLIO-DEVOPS-2025-V1")
+	w.Header().Set("X-Service-Signature", "DSK-PORTFOLIO-2025-ORDER-SVC-ORIG")
+	json.NewEncoder(w).Encode(response)
+}
+
+func authorHandler(w http.ResponseWriter, r *http.Request) {
+	response := map[string]interface{}{
+		"project": map[string]string{
+			"name":        "DevOps Portfolio Platform",
+			"id":          "PORTFOLIO-DEVOPS-2025-V1",
+			"description": "Enterprise-Grade Cloud-Native Application Delivery Platform",
+			"version":     "v1.0.0-portfolio",
+		},
+		"author": map[string]string{
+			"name":      "dev-shiki",
+			"role":      "DevOps Engineer & Cloud Architect",
+			"contact":   "github.com/dev-shiki",
+			"portfolio": "DevOps Engineering & Cloud Architecture Showcase",
+		},
+		"technical_details": map[string]interface{}{
+			"service_name":     "order-service",
+			"signature":        "DSK-PORTFOLIO-2025-ORDER-SVC-ORIG",
+			"build_timestamp":  "2025-01-27T12:00:00Z",
+			"architecture":     "Microservices with Kubernetes",
+			"technologies":     []string{"Go", "Docker", "Kubernetes", "Prometheus", "Grafana"},
+			"observability":    []string{"Metrics", "Tracing", "Logging"},
+			"deployment":       "GitOps with ArgoCD",
+		},
+		"portfolio_highlights": []string{
+			"Enterprise-grade microservices architecture",
+			"Complete CI/CD pipeline with security scanning",
+			"Comprehensive observability stack",
+			"GitOps deployment with ArgoCD",
+			"Infrastructure as Code",
+			"DevSecOps best practices",
+		},
+		"certifications": []string{
+			"This is an original work created for professional portfolio",
+			"Demonstrates advanced DevOps and cloud engineering skills",
+			"Showcases enterprise-grade best practices",
+		},
 		"timestamp": time.Now().Format(time.RFC3339),
 	}
 	
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Author", "dev-shiki")
+	w.Header().Set("X-Portfolio-Project", "PORTFOLIO-DEVOPS-2025-V1")
+	w.Header().Set("X-Service-Signature", "DSK-PORTFOLIO-2025-ORDER-SVC-ORIG")
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -352,6 +426,7 @@ func main() {
 	
 	// API routes
 	r.HandleFunc("/health", healthHandler).Methods("GET")
+	r.HandleFunc("/author", authorHandler).Methods("GET")
 	r.HandleFunc("/orders", store.handleGetOrders).Methods("GET")
 	r.HandleFunc("/orders/{id:[0-9]+}", store.handleGetOrder).Methods("GET")
 	r.HandleFunc("/orders", store.handleCreateOrder).Methods("POST")

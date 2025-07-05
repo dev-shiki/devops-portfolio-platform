@@ -5,4 +5,16 @@ metadata:
   labels:
     name: devops-portfolio
     purpose: portfolio-project
-    environment: development 
+    environment: development
+    author: dev-shiki
+    project-id: PORTFOLIO-DEVOPS-2025-V1
+    portfolio-tag: DevOps-Engineering-Showcase
+    created-by: dev-shiki-portfolio-platform
+  annotations:
+    author: "dev-shiki"
+    contact: "github.com/dev-shiki"
+    project-signature: "DSK-PORTFOLIO-2025-K8S-NAMESPACE-ORIG"
+    build-timestamp: "2025-01-27T12:00:00Z"
+    project-description: "Enterprise-Grade Cloud-Native Application Delivery Platform"
+    portfolio-purpose: "Professional DevOps Engineering Showcase"
+    original-work: "This is an original work created for professional portfolio demonstration" 

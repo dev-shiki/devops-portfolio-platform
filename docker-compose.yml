@@ -1,5 +1,15 @@
 version: '3.8'
 
+# DevOps Portfolio Platform - Docker Compose Configuration
+# Author: dev-shiki
+# Project: PORTFOLIO-DEVOPS-2025-V1
+# Signature: DSK-PORTFOLIO-2025-DOCKER-COMPOSE-ORIG
+# Build Timestamp: 2025-01-27T12:00:00Z
+# 
+# This is an original work created for professional portfolio demonstration.
+# Contact: github.com/dev-shiki
+# Portfolio: DevOps Engineering & Cloud Architecture Showcase
+
 services:
   user-service:
     build:
@@ -9,6 +19,15 @@ services:
       - "8080:8080"
     environment:
       - PORT=8080
+      - AUTHOR=dev-shiki
+      - PROJECT_ID=PORTFOLIO-DEVOPS-2025-V1
+      - SERVICE_SIGNATURE=DSK-PORTFOLIO-2025-USER-SVC-ORIG
+    labels:
+      - "author=dev-shiki"
+      - "project-id=PORTFOLIO-DEVOPS-2025-V1"
+      - "service-signature=DSK-PORTFOLIO-2025-USER-SVC-ORIG"
+      - "portfolio-tag=DevOps-Engineering-Showcase"
+      - "contact=github.com/dev-shiki"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
       interval: 30s
@@ -26,6 +45,15 @@ services:
     environment:
       - PORT=8081
       - USER_SERVICE_URL=http://user-service:8080
+      - AUTHOR=dev-shiki
+      - PROJECT_ID=PORTFOLIO-DEVOPS-2025-V1
+      - SERVICE_SIGNATURE=DSK-PORTFOLIO-2025-ORDER-SVC-ORIG
+    labels:
+      - "author=dev-shiki"
+      - "project-id=PORTFOLIO-DEVOPS-2025-V1"
+      - "service-signature=DSK-PORTFOLIO-2025-ORDER-SVC-ORIG"
+      - "portfolio-tag=DevOps-Engineering-Showcase"
+      - "contact=github.com/dev-shiki"
     depends_on:
       - user-service
     healthcheck:
