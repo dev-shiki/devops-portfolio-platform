@@ -97,7 +97,7 @@ jobs:
       uses: docker/setup-buildx-action@v3
       
     - name: Build User Service image (test only)
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: ./user-service
         file: ./user-service/Dockerfile
@@ -107,7 +107,7 @@ jobs:
         cache-to: type=gha,mode=max
         
     - name: Build Order Service image (test only)
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: ./order-service
         file: ./order-service/Dockerfile

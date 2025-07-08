@@ -167,7 +167,7 @@ jobs:
         
     - name: Build User Service
       if: needs.code-quality.outputs.user-service-changed == 'true'
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: ./user-service
         push: true
@@ -179,7 +179,7 @@ jobs:
         
     - name: Build Order Service
       if: needs.code-quality.outputs.order-service-changed == 'true'
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: ./order-service
         push: true

@@ -164,7 +164,7 @@ jobs:
           type=raw,value=latest,enable={{is_default_branch}}
           
     - name: Build and push User Service image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: ./user-service
         file: ./user-service/Dockerfile
@@ -175,7 +175,7 @@ jobs:
         cache-to: type=gha,mode=max
         
     - name: Build and push Order Service image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: ./order-service
         file: ./order-service/Dockerfile
