@@ -36,7 +36,7 @@ spec:
         fsGroup: 10001
       containers:
       - name: order-service
-        image: ghcr.io/your-username/devops-portfolio/order-service:latest  # Replace with your image
+        image: ghcr.io/your-username/devops-portfolio/order-service:main-cca5d86-20250711-025655
         imagePullPolicy: Always
         ports:
         - containerPort: 8081
