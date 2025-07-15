@@ -269,7 +269,7 @@ func TestAuthorHandler(t *testing.T) {
 func TestCORSPreflight(t *testing.T) {
 	store := NewUserStore()
 	r := mux.NewRouter()
-	r.HandleFunc("/users", store.handleGetUsers).Methods("GET")
+	r.HandleFunc("/users", store.handleGetUsers).Methods("GET", "OPTIONS") // tambahkan OPTIONS agar middleware dijalankan
 	// Tambahkan CORS middleware
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
