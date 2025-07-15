@@ -50,12 +50,28 @@ jobs:
       run: |
         go test -v ./... -coverprofile=coverage.out
         go tool cover -html=coverage.out -o coverage.html
-        
+
+    - name: Upload coverage to Codecov (User Service)
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./user-service/coverage.out
+        flags: user-service
+        name: codecov-user-service
+
     - name: Run tests - Order Service
       working-directory: ./order-service  
       run: |
         go test -v ./... -coverprofile=coverage.out
         go tool cover -html=coverage.out -o coverage.html
+
+    - name: Upload coverage to Codecov (Order Service)
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./order-service/coverage.out
+        flags: order-service
+        name: codecov-order-service
         
     - name: Build - User Service
       working-directory: ./user-service

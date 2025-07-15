@@ -1,4 +1,5 @@
 # 🚀 **DevOps Portfolio Platform**
+[![codecov](https://codecov.io/gh/dev-shiki/devops-portfolio-platform/branch/master/graph/badge.svg)](https://codecov.io/gh/dev-shiki/devops-portfolio-platform)
 ## Enterprise-Grade Cloud-Native Application Delivery Platform
 
 [![Platform Status](https://img.shields.io/badge/Platform-Production%20Ready-brightgreen)]()
