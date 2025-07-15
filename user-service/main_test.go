@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gorilla/mux"
 )
 
 func TestNewUserStore(t *testing.T) {
@@ -208,5 +210,90 @@ func TestHandleCreateUserMissingFields(t *testing.T) {
 	
 	if status := rr.Code; status != http.StatusBadRequest {
 		t.Errorf("Expected status code %d, got %d", http.StatusBadRequest, status)
+	}
+} 
+
+func TestHandleGetUser_InvalidID(t *testing.T) {
+	store := NewUserStore()
+	req, err := http.NewRequest("GET", "/users/abc", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Simulasi mux vars
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := map[string]string{"id": "abc"}
+		r = mux.SetURLVars(r, vars)
+		store.handleGetUser(w, r)
+	})
+	handler.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("Expected status code %d, got %d", http.StatusBadRequest, status)
+	}
+}
+
+func TestHandleGetUser_NotFound(t *testing.T) {
+	store := NewUserStore()
+	req, err := http.NewRequest("GET", "/users/999", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := map[string]string{"id": "999"}
+		r = mux.SetURLVars(r, vars)
+		store.handleGetUser(w, r)
+	})
+	handler.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusNotFound {
+		t.Errorf("Expected status code %d, got %d", http.StatusNotFound, status)
+	}
+}
+
+func TestAuthorHandler(t *testing.T) {
+	req, err := http.NewRequest("GET", "/author", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(authorHandler)
+	handler.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Expected status code %d, got %d", http.StatusOK, status)
+	}
+	if ct := rr.Header().Get("Content-Type"); ct != "application/json" {
+		t.Errorf("Expected Content-Type application/json, got %s", ct)
+	}
+}
+
+func TestCORSPreflight(t *testing.T) {
+	store := NewUserStore()
+	r := mux.NewRouter()
+	r.HandleFunc("/users", store.handleGetUsers).Methods("GET")
+	// Tambahkan CORS middleware
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	})
+
+	req, err := http.NewRequest("OPTIONS", "/users", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Expected status code %d, got %d", http.StatusOK, status)
+	}
+	if rr.Header().Get("Access-Control-Allow-Origin") != "*" {
+		t.Errorf("CORS header missing")
 	}
 } 

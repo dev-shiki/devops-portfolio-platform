@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gorilla/mux"
 )
 
 func TestNewOrderStore(t *testing.T) {
@@ -360,5 +362,161 @@ func TestFetchUserFromService(t *testing.T) {
 	expectedEmail := "user1@example.com"
 	if user.Email != expectedEmail {
 		t.Errorf("Expected email '%s', got %s", expectedEmail, user.Email)
+	}
+} 
+
+func TestHandleGetOrder_InvalidID(t *testing.T) {
+	store := NewOrderStore()
+	req, err := http.NewRequest("GET", "/orders/abc", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := map[string]string{"id": "abc"}
+		r = mux.SetURLVars(r, vars)
+		store.handleGetOrder(w, r)
+	})
+	handler.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("Expected status code %d, got %d", http.StatusBadRequest, status)
+	}
+}
+
+func TestHandleGetOrder_NotFound(t *testing.T) {
+	store := NewOrderStore()
+	req, err := http.NewRequest("GET", "/orders/999", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := map[string]string{"id": "999"}
+		r = mux.SetURLVars(r, vars)
+		store.handleGetOrder(w, r)
+	})
+	handler.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusNotFound {
+		t.Errorf("Expected status code %d, got %d", http.StatusNotFound, status)
+	}
+}
+
+func TestHandleUpdateOrderStatus_InvalidID(t *testing.T) {
+	store := NewOrderStore()
+	req, err := http.NewRequest("PUT", "/orders/abc/status", bytes.NewBuffer([]byte(`{"status":"shipped"}`)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := map[string]string{"id": "abc"}
+		r = mux.SetURLVars(r, vars)
+		store.handleUpdateOrderStatus(w, r)
+	})
+	handler.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("Expected status code %d, got %d", http.StatusBadRequest, status)
+	}
+}
+
+func TestHandleUpdateOrderStatus_NotFound(t *testing.T) {
+	store := NewOrderStore()
+	req, err := http.NewRequest("PUT", "/orders/999/status", bytes.NewBuffer([]byte(`{"status":"shipped"}`)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := map[string]string{"id": "999"}
+		r = mux.SetURLVars(r, vars)
+		store.handleUpdateOrderStatus(w, r)
+	})
+	handler.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusNotFound {
+		t.Errorf("Expected status code %d, got %d", http.StatusNotFound, status)
+	}
+}
+
+func TestHandleUpdateOrderStatus_InvalidStatus(t *testing.T) {
+	store := NewOrderStore()
+	req, err := http.NewRequest("PUT", "/orders/1/status", bytes.NewBuffer([]byte(`{"status":"invalid"}`)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := map[string]string{"id": "1"}
+		r = mux.SetURLVars(r, vars)
+		store.handleUpdateOrderStatus(w, r)
+	})
+	handler.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("Expected status code %d, got %d", http.StatusBadRequest, status)
+	}
+}
+
+func TestHandleUpdateOrderStatus_InvalidJSON(t *testing.T) {
+	store := NewOrderStore()
+	req, err := http.NewRequest("PUT", "/orders/1/status", bytes.NewBuffer([]byte(`notjson`)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := map[string]string{"id": "1"}
+		r = mux.SetURLVars(r, vars)
+		store.handleUpdateOrderStatus(w, r)
+	})
+	handler.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("Expected status code %d, got %d", http.StatusBadRequest, status)
+	}
+}
+
+func TestAuthorHandler(t *testing.T) {
+	req, err := http.NewRequest("GET", "/author", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(authorHandler)
+	handler.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Expected status code %d, got %d", http.StatusOK, status)
+	}
+	if ct := rr.Header().Get("Content-Type"); ct != "application/json" {
+		t.Errorf("Expected Content-Type application/json, got %s", ct)
+	}
+}
+
+func TestCORSPreflight(t *testing.T) {
+	store := NewOrderStore()
+	r := mux.NewRouter()
+	r.HandleFunc("/orders", store.handleGetOrders).Methods("GET")
+	// Tambahkan CORS middleware
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	})
+
+	req, err := http.NewRequest("OPTIONS", "/orders", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Expected status code %d, got %d", http.StatusOK, status)
+	}
+	if rr.Header().Get("Access-Control-Allow-Origin") != "*" {
+		t.Errorf("CORS header missing")
 	}
 } 
