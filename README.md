@@ -1,5 +1,7 @@
 # 🚀 **DevOps Portfolio Platform**
 [![codecov](https://codecov.io/gh/dev-shiki/devops-portfolio-platform/branch/master/graph/badge.svg)](https://codecov.io/gh/dev-shiki/devops-portfolio-platform)
+[![Build Status](https://github.com/dev-shiki/devops-portfolio-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/dev-shiki/devops-portfolio-platform/actions)
+[![Security Scan](https://github.com/dev-shiki/devops-portfolio-platform/actions/workflows/security.yml/badge.svg)](https://github.com/dev-shiki/devops-portfolio-platform/actions)
 ## Enterprise-Grade Cloud-Native Application Delivery Platform
 
 [![Platform Status](https://img.shields.io/badge/Platform-Production%20Ready-brightgreen)]()
