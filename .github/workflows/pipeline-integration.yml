@@ -267,7 +267,7 @@ jobs:
             repo: context.repo.repo,
             title: `🚀 Pipeline Deployment: ${context.sha.substring(0, 7)}`,
             head: process.env.BRANCH_NAME,
-            base: 'main',
+            base: 'master',
             body: `## 🚀 Automated Pipeline Deployment
             
             ### 📦 Updated Services:
