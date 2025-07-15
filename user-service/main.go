@@ -30,6 +30,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"user-service/internal/httpx"
 )
 
 // User represents a user in the system
@@ -145,14 +146,14 @@ func (s *UserStore) handleGetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		httpx.WriteError(w, http.StatusBadRequest, "Invalid user ID")
 		httpRequests.WithLabelValues(r.Method, "/users/{id}", "400").Inc()
 		return
 	}
 	
 	user, exists := s.GetUser(id)
 	if !exists {
-		http.Error(w, "User not found", http.StatusNotFound)
+		httpx.WriteError(w, http.StatusNotFound, "User not found")
 		httpRequests.WithLabelValues(r.Method, "/users/{id}", "404").Inc()
 		return
 	}
@@ -173,13 +174,13 @@ func (s *UserStore) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		httpx.WriteError(w, http.StatusBadRequest, "Invalid JSON")
 		httpRequests.WithLabelValues(r.Method, "/users", "400").Inc()
 		return
 	}
 	
 	if req.Name == "" || req.Email == "" {
-		http.Error(w, "Name and email are required", http.StatusBadRequest)
+		httpx.WriteError(w, http.StatusBadRequest, "Name and email are required")
 		httpRequests.WithLabelValues(r.Method, "/users", "400").Inc()
 		return
 	}
@@ -193,102 +194,19 @@ func (s *UserStore) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 	httpRequests.WithLabelValues(r.Method, "/users", "201").Inc()
 }
 
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	response := map[string]string{
-		"status":           "healthy",
-		"service":          "user-service",
-		"timestamp":        time.Now().Format(time.RFC3339),
-		"author":           "dev-shiki",
-		"project_id":       "PORTFOLIO-DEVOPS-2025-V1",
-		"signature":        "DSK-PORTFOLIO-2025-USER-SVC-ORIG",
-		"build_version":    "v1.0.0-portfolio",
-		"portfolio_tag":    "DevOps-Engineering-Showcase",
-		"contact":          "github.com/dev-shiki",
-	}
-	
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("X-Author", "dev-shiki")
-	w.Header().Set("X-Portfolio-Project", "PORTFOLIO-DEVOPS-2025-V1")
-	w.Header().Set("X-Service-Signature", "DSK-PORTFOLIO-2025-USER-SVC-ORIG")
-	json.NewEncoder(w).Encode(response)
-}
-
-func authorHandler(w http.ResponseWriter, r *http.Request) {
-	response := map[string]interface{}{
-		"project": map[string]string{
-			"name":        "DevOps Portfolio Platform",
-			"id":          "PORTFOLIO-DEVOPS-2025-V1",
-			"description": "Enterprise-Grade Cloud-Native Application Delivery Platform",
-			"version":     "v1.0.0-portfolio",
-		},
-		"author": map[string]string{
-			"name":      "dev-shiki",
-			"role":      "DevOps Engineer & Cloud Architect",
-			"contact":   "github.com/dev-shiki",
-			"portfolio": "DevOps Engineering & Cloud Architecture Showcase",
-		},
-		"technical_details": map[string]interface{}{
-			"service_name":     "user-service",
-			"signature":        "DSK-PORTFOLIO-2025-USER-SVC-ORIG",
-			"build_timestamp":  "2025-01-27T12:00:00Z",
-			"architecture":     "Microservices with Kubernetes",
-			"technologies":     []string{"Go", "Docker", "Kubernetes", "Prometheus", "Grafana"},
-			"observability":    []string{"Metrics", "Tracing", "Logging"},
-			"deployment":       "GitOps with ArgoCD",
-		},
-		"portfolio_highlights": []string{
-			"Enterprise-grade microservices architecture",
-			"Complete CI/CD pipeline with security scanning",
-			"Comprehensive observability stack",
-			"GitOps deployment with ArgoCD",
-			"Infrastructure as Code",
-			"DevSecOps best practices",
-		},
-		"certifications": []string{
-			"This is an original work created for professional portfolio",
-			"Demonstrates advanced DevOps and cloud engineering skills",
-			"Showcases enterprise-grade best practices",
-		},
-		"timestamp": time.Now().Format(time.RFC3339),
-	}
-	
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("X-Author", "dev-shiki")
-	w.Header().Set("X-Portfolio-Project", "PORTFOLIO-DEVOPS-2025-V1")
-	w.Header().Set("X-Service-Signature", "DSK-PORTFOLIO-2025-USER-SVC-ORIG")
-	json.NewEncoder(w).Encode(response)
-}
-
 func main() {
 	store := NewUserStore()
 	
 	r := mux.NewRouter()
-	
-	// API routes
-	r.HandleFunc("/health", healthHandler).Methods("GET")
-	r.HandleFunc("/author", authorHandler).Methods("GET")
+	r.Use(httpx.CORSMiddleware)
+	r.HandleFunc("/health", httpx.NewHealthHandler("user-service")).Methods("GET")
+	r.HandleFunc("/author", httpx.AuthorHandler).Methods("GET")
 	r.HandleFunc("/users", store.handleGetUsers).Methods("GET")
 	r.HandleFunc("/users/{id:[0-9]+}", store.handleGetUser).Methods("GET")
 	r.HandleFunc("/users", store.handleCreateUser).Methods("POST")
 	
 	// Metrics endpoint
 	r.Handle("/metrics", promhttp.Handler())
-	
-	// Enable CORS
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			
-			if r.Method == "OPTIONS" {
-				w.WriteHeader(http.StatusOK)
-				return
-			}
-			
-			next.ServeHTTP(w, r)
-		})
-	})
 	
 	port := ":8080"
 	log.Printf("User Service starting on port %s", port)

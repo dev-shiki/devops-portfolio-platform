@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"user-service/internal/httpx"
 )
 
 func TestNewUserStore(t *testing.T) {
@@ -74,9 +75,8 @@ func TestHealthHandler(t *testing.T) {
 	}
 	
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(healthHandler)
-	
-	handler.ServeHTTP(rr, req)
+	handler := httpx.NewHealthHandler("user-service")
+	handler(rr, req)
 	
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Expected status code %d, got %d", http.StatusOK, status)
@@ -107,7 +107,7 @@ func TestHandleGetUsers(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(store.handleGetUsers)
 	
-	handler.ServeHTTP(rr, req)
+	handler(rr, req)
 	
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Expected status code %d, got %d", http.StatusOK, status)
@@ -145,7 +145,7 @@ func TestHandleCreateUser(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(store.handleCreateUser)
 	
-	handler.ServeHTTP(rr, req)
+	handler(rr, req)
 	
 	if status := rr.Code; status != http.StatusCreated {
 		t.Errorf("Expected status code %d, got %d", http.StatusCreated, status)
@@ -177,7 +177,7 @@ func TestHandleCreateUserInvalidJSON(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(store.handleCreateUser)
 	
-	handler.ServeHTTP(rr, req)
+	handler(rr, req)
 	
 	if status := rr.Code; status != http.StatusBadRequest {
 		t.Errorf("Expected status code %d, got %d", http.StatusBadRequest, status)
@@ -206,7 +206,7 @@ func TestHandleCreateUserMissingFields(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(store.handleCreateUser)
 	
-	handler.ServeHTTP(rr, req)
+	handler(rr, req)
 	
 	if status := rr.Code; status != http.StatusBadRequest {
 		t.Errorf("Expected status code %d, got %d", http.StatusBadRequest, status)
@@ -226,7 +226,7 @@ func TestHandleGetUser_InvalidID(t *testing.T) {
 		r = mux.SetURLVars(r, vars)
 		store.handleGetUser(w, r)
 	})
-	handler.ServeHTTP(rr, req)
+	handler(rr, req)
 	if status := rr.Code; status != http.StatusBadRequest {
 		t.Errorf("Expected status code %d, got %d", http.StatusBadRequest, status)
 	}
@@ -244,7 +244,7 @@ func TestHandleGetUser_NotFound(t *testing.T) {
 		r = mux.SetURLVars(r, vars)
 		store.handleGetUser(w, r)
 	})
-	handler.ServeHTTP(rr, req)
+	handler(rr, req)
 	if status := rr.Code; status != http.StatusNotFound {
 		t.Errorf("Expected status code %d, got %d", http.StatusNotFound, status)
 	}
@@ -256,8 +256,8 @@ func TestAuthorHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(authorHandler)
-	handler.ServeHTTP(rr, req)
+	handler := httpx.AuthorHandler
+	handler(rr, req)
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Expected status code %d, got %d", http.StatusOK, status)
 	}

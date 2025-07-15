@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"order-service/internal/httpx"
 )
 
 func TestNewOrderStore(t *testing.T) {
@@ -125,7 +126,7 @@ func TestHealthHandler(t *testing.T) {
 	}
 	
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(healthHandler)
+	handler := http.HandlerFunc(httpx.NewHealthHandler("order-service"))
 	
 	handler.ServeHTTP(rr, req)
 	
@@ -335,7 +336,7 @@ func TestHandleUpdateOrderStatusInvalidStatus(t *testing.T) {
 	if !validStatuses[validStatus] {
 		t.Error("Expected 'shipped' to be valid")
 	}
-}
+} 
 
 func TestFetchUserFromService(t *testing.T) {
 	// Test the fallback behavior when user service is not available
@@ -479,7 +480,7 @@ func TestAuthorHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(authorHandler)
+	handler := http.HandlerFunc(httpx.AuthorHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Expected status code %d, got %d", http.StatusOK, status)
