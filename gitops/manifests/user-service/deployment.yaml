@@ -36,7 +36,7 @@ spec:
         fsGroup: 10001
       containers:
       - name: user-service
-        image: ghcr.io/your-username/devops-portfolio/user-service:latest  # Replace with your image
+        image: ghcr.io/dev-shiki/devops-portfolio-platform/user-service:master-c111591-20250719-153200
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
